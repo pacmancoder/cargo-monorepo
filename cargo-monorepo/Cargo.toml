@@ -1,0 +1,25 @@
+[package]
+name = "cargo-monorepo"
+description = "Monorepo management tool"
+version = "0.1.0"
+publish = false
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0"
+handlebars = "4.1"
+octocrab = { version = "0.12", features = ["rustls"] }
+semver = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+structopt = "0.3"
+tokio = { version = "1.12", features = ["rt-multi-thread", "macros", "fs", "process", "io-std"] }
+toml = "0.5"
+async-trait = "0.1"
+convert_case = "0.4"
+cargo_metadata = "0.14"
+url = "2.2"
+tokio-util = "0.6"
+reqwest = { version = "0.11", features = ["stream"] }
+
+[dev-dependencies]
+expect-test = "1.1"
