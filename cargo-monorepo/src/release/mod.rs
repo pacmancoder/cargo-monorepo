@@ -1,13 +1,12 @@
 mod context;
 mod step;
 
+use self::context::ReleaseContext;
 use crate::config::Config;
 use async_trait::async_trait;
 use std::collections::VecDeque;
-use structopt::StructOpt;
-use self::context::ReleaseContext;
 
-#[derive(StructOpt)]
+#[derive(clap::Parser, Debug)]
 #[structopt(about = "Automatically prepare new repo release")]
 pub struct Command {
     /// Actually execute command instead of dry run
@@ -63,10 +62,24 @@ impl ReleaseExecutor {
             self.add_step(step::CargoPublish::new());
         }
         if self.context.release_config()?.github.is_some() {
-            if self.context.release_config()?.github.as_ref().unwrap().create_tag {
+            if self
+                .context
+                .release_config()?
+                .github
+                .as_ref()
+                .unwrap()
+                .create_tag
+            {
                 self.add_step(step::CreateTagOnGithub);
             }
-            if self.context.release_config()?.github.as_ref().unwrap().create_release_page {
+            if self
+                .context
+                .release_config()?
+                .github
+                .as_ref()
+                .unwrap()
+                .create_release_page
+            {
                 self.add_step(step::CreateGithubRelease);
             }
         }

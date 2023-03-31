@@ -1,11 +1,6 @@
-use async_trait::async_trait;
+use crate::release::{ReleaseContext, ReleaseStep};
 use anyhow::bail;
-use crate::{
-    release::{
-        ReleaseStep,
-        ReleaseContext,
-    },
-};
+use async_trait::async_trait;
 
 pub struct CollectArtifacts;
 
@@ -13,7 +8,10 @@ pub struct CollectArtifacts;
 impl ReleaseStep for CollectArtifacts {
     fn start_message(&self, ctx: &ReleaseContext) -> anyhow::Result<String> {
         let directory = &ctx.artifacts_config()?.directory;
-        Ok(format!("Collecting artifacts from '{}'", directory.display()))
+        Ok(format!(
+            "Collecting artifacts from '{}'",
+            directory.display()
+        ))
     }
 
     fn success_message(&self, ctx: &ReleaseContext) -> anyhow::Result<String> {

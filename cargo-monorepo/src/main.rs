@@ -8,10 +8,10 @@ mod release;
 
 use crate::config::Config;
 use anyhow::Context;
+use clap::Parser as _;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
-#[derive(StructOpt)]
+#[derive(clap::Parser, Debug)]
 #[structopt(about = env!("CARGO_PKG_DESCRIPTION"))]
 struct Args {
     /// Explicitly set manifest to process instead of
@@ -22,7 +22,7 @@ struct Args {
     subcommand: Subcommand,
 }
 
-#[derive(StructOpt)]
+#[derive(clap::Parser, Debug)]
 #[structopt(about = env!("CARGO_PKG_DESCRIPTION"))]
 enum Subcommand {
     Release(release::Command),
@@ -31,11 +31,11 @@ enum Subcommand {
 async fn run(args: Args) -> anyhow::Result<()> {
     let manifest_path_str = args.manifest_path.display();
 
-    let config_content = tokio::fs::read(&args.manifest_path)
+    let config_content = tokio::fs::read_to_string(&args.manifest_path)
         .await
         .with_context(|| format!("Failed to read {} config", manifest_path_str))?;
 
-    let config: Config = toml::from_slice(&config_content)
+    let config: Config = toml::from_str(&config_content)
         .with_context(|| format!("Failed to parse {}", manifest_path_str))?;
 
     config
@@ -53,7 +53,7 @@ async fn run(args: Args) -> anyhow::Result<()> {
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
-    let args = Args::from_args();
+    let args = Args::parse();
     if let Err(e) = run(args).await {
         println!("❌ {:#}", e);
         std::process::exit(1);

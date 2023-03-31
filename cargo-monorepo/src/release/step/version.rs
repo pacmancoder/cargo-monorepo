@@ -1,25 +1,26 @@
-use async_trait::async_trait;
-use anyhow::bail;
-use tokio::process::Command;
-use semver::Version;
 use crate::{
-    release::{
-        ReleaseStep,
-        ReleaseContext,
-    },
+    release::{ReleaseContext, ReleaseStep},
     utils::run_and_capture_stdout,
 };
+use anyhow::bail;
+use async_trait::async_trait;
 use cargo_metadata::{DependencyKind, Package};
+use semver::Version;
+use tokio::process::Command;
 
 pub struct VaidateVersion;
 
 pub const CRATES_IO_REGISTRY_NAME: &str = "crates-io";
 
 impl VaidateVersion {
-    async fn check_version_raised(&self, version: Version, ctx: &mut ReleaseContext) -> anyhow::Result<()> {
+    async fn check_version_raised(
+        &self,
+        version: Version,
+        ctx: &mut ReleaseContext,
+    ) -> anyhow::Result<()> {
         if !ctx.release_config()?.check_version_raised {
             println!("\tVersion raise check was skipped");
-            return Ok(())
+            return Ok(());
         } else {
             println!("\tChecking that version has been raised...");
         }
@@ -42,7 +43,7 @@ impl VaidateVersion {
 
     async fn check_dev_dependencies(&self, ctx: &mut ReleaseContext) -> anyhow::Result<()> {
         if ctx.release_config()?.allow_non_path_dev_dependencies {
-            return Ok(())
+            return Ok(());
         }
 
         println!("\tChecking create workspace dependencies...");
@@ -54,13 +55,13 @@ impl VaidateVersion {
         let mut invalid_dev_dependencies = false;
 
         for package in workspace_packages {
-
             let mut package_validation_failed = false;
             let mut broken_dev_deps = vec![];
 
             for dep in &package.dependencies {
                 if dep.kind != DependencyKind::Development
-                    || !workspace_package_names.contains(&dep.name) {
+                    || !workspace_package_names.contains(&dep.name)
+                {
                     continue;
                 }
 
@@ -72,7 +73,10 @@ impl VaidateVersion {
 
             if package_validation_failed {
                 let package_name = full_package_name(&package);
-                println!("\t❌ {} has invalid dev-dependencies ({:?})", package_name, broken_dev_deps);
+                println!(
+                    "\t❌ {} has invalid dev-dependencies ({:?})",
+                    package_name, broken_dev_deps
+                );
                 invalid_dev_dependencies = true;
             }
         }
@@ -80,7 +84,8 @@ impl VaidateVersion {
         if invalid_dev_dependencies {
             bail!(
                 "Detected invalid dev dependencies: version field should not be \
-                specified for in-workspace dev-dependencies");
+                specified for in-workspace dev-dependencies"
+            );
         }
 
         Ok(())
@@ -95,11 +100,9 @@ impl VaidateVersion {
         let mut inconsistent_registries = false;
 
         for p in &workspace_packages {
-            let publish_allowed = p.publish.as_ref().map_or(true, |allowed| {
-                match &registry {
-                    Some(name) => allowed.contains(name),
-                    None => allowed.contains(&CRATES_IO_REGISTRY_NAME.to_owned()),
-                }
+            let publish_allowed = p.publish.as_ref().map_or(true, |allowed| match &registry {
+                Some(name) => allowed.contains(name),
+                None => allowed.contains(&CRATES_IO_REGISTRY_NAME.to_owned()),
             });
 
             let registry_name = registry
@@ -108,7 +111,10 @@ impl VaidateVersion {
 
             if !publish_allowed {
                 let package_name = full_package_name(p);
-                println!("\t❌ {} does not allow publish to `{}` registry", package_name, registry_name);
+                println!(
+                    "\t❌ {} does not allow publish to `{}` registry",
+                    package_name, registry_name
+                );
                 inconsistent_registries = true;
             }
         }
@@ -120,7 +126,11 @@ impl VaidateVersion {
         Ok(())
     }
 
-    async fn check_version_consistency(&self, version: Version, ctx: &mut ReleaseContext) -> anyhow::Result<()> {
+    async fn check_version_consistency(
+        &self,
+        version: Version,
+        ctx: &mut ReleaseContext,
+    ) -> anyhow::Result<()> {
         println!("\tChecking for crates version consistency...");
 
         let packages_to_publish = ctx.packages_to_publish()?;
@@ -141,8 +151,8 @@ impl VaidateVersion {
             let mut inconsistent_deps_list = vec![];
 
             for dep in &package.dependencies {
-                let dep_inconsistent = workspace_package_names.contains(&dep.name)
-                    && !dep.req.matches(&version);
+                let dep_inconsistent =
+                    workspace_package_names.contains(&dep.name) && !dep.req.matches(&version);
 
                 if dep_inconsistent {
                     inconsistent_deps_list.push(format!("{} {}", dep.name, dep.req));
@@ -205,13 +215,10 @@ async fn query_last_released_version(crate_name: &str) -> anyhow::Result<Option<
         .map(|s| s.trim().split('"').nth(1))
         .flatten();
 
-    let version = version_str
-        .map(|s| Version::parse(s))
-        .transpose()?;
+    let version = version_str.map(|s| Version::parse(s)).transpose()?;
 
     Ok(version)
 }
-
 
 fn full_package_name(p: &Package) -> String {
     format!("{} v{}", p.name, p.version)

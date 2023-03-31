@@ -1,15 +1,15 @@
-mod init;
 mod artifacts;
+mod cargo;
 mod changelog;
 mod github;
+mod init;
 mod version;
-mod cargo;
 
 pub use self::{
-    init::Init,
     artifacts::CollectArtifacts,
-    changelog::CaptureChangelog,
-    github::{ValidateCommitPushedToGithub, CreateTagOnGithub, CreateGithubRelease},
-    version::VaidateVersion,
     cargo::CargoPublish,
+    changelog::CaptureChangelog,
+    github::{CreateGithubRelease, CreateTagOnGithub, ValidateCommitPushedToGithub},
+    init::Init,
+    version::VaidateVersion,
 };

@@ -1,7 +1,7 @@
+use anyhow::Context;
+use octocrab::{models::ReleaseId, Octocrab};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, path::Path, str::FromStr};
-use octocrab::{Octocrab, models::ReleaseId};
-use anyhow::Context;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Repo {
@@ -178,11 +178,7 @@ pub async fn upload_github_release_asset(
     file_path: &Path,
 ) -> anyhow::Result<()> {
     let file = std::path::Path::new(file_path);
-    let file_name = file
-        .file_name()
-        .unwrap()
-        .to_str()
-        .unwrap();
+    let file_name = file.file_name().unwrap().to_str().unwrap();
 
     let release_upload_url = format!(
         "https://uploads.github.com/repos/{owner}/{repo}/releases/{release_id}/assets",
@@ -190,11 +186,15 @@ pub async fn upload_github_release_asset(
         repo = repo.name,
         release_id = release_id,
     );
-    let mut release_upload_url = url::Url::from_str(&release_upload_url)
-        .expect("BUG: Invalid asset upload url");
+    let mut release_upload_url =
+        url::Url::from_str(&release_upload_url).expect("BUG: Invalid asset upload url");
     release_upload_url.set_query(Some(format!("{}={}", "name", file_name).as_str()));
-    let file_size = std::fs::metadata(file).expect("Can't get asset metadata").len();
-    let file = tokio::fs::File::open(file).await.expect("Failed to open asset file");
+    let file_size = std::fs::metadata(file)
+        .expect("Can't get asset metadata")
+        .len();
+    let file = tokio::fs::File::open(file)
+        .await
+        .expect("Failed to open asset file");
     let stream = tokio_util::codec::FramedRead::new(file, tokio_util::codec::BytesCodec::new());
     let body = reqwest::Body::wrap_stream(stream);
     let builder = octocrab
@@ -207,8 +207,7 @@ pub async fn upload_github_release_asset(
         .await
         .with_context(|| "Failed to send upload artifact request")?;
 
-    resp
-        .error_for_status()
+    resp.error_for_status()
         .with_context(|| "Artifact upload failed")?;
 
     Ok(())

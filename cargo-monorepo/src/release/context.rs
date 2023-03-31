@@ -1,9 +1,12 @@
-use crate::{config::{self, Config}, template::TextTemplateContext};
+use crate::{
+    config::{self, Config},
+    template::TextTemplateContext,
+};
+use anyhow::{anyhow, Context};
+use cargo_metadata::{Metadata, Package};
+use octocrab::Octocrab as GithubClient;
 use semver::Version;
 use std::path::PathBuf;
-use octocrab::Octocrab as GithubClient;
-use anyhow::{Context, anyhow};
-use cargo_metadata::{Metadata, Package};
 
 pub struct ReleaseContext {
     pub dry_run: bool,
@@ -102,7 +105,8 @@ impl ReleaseContext {
     pub fn workspace_package_names(&self) -> anyhow::Result<Vec<String>> {
         let metadata = self.cargo_metadata()?;
         let workspace_package_ids = &metadata.workspace_members;
-        let names = metadata.packages
+        let names = metadata
+            .packages
             .iter()
             .filter_map(|p| {
                 workspace_package_ids
@@ -116,7 +120,8 @@ impl ReleaseContext {
     pub fn packages_to_publish(&self) -> anyhow::Result<Vec<&Package>> {
         let metadata = self.cargo_metadata()?;
 
-        let packages = metadata.packages
+        let packages = metadata
+            .packages
             .iter()
             .filter(|p| {
                 // for publish = false, package.publish would contain Some(vec![])
@@ -135,10 +140,7 @@ impl ReleaseContext {
         let mut ordered_packages = vec![];
 
         for s in sorted {
-            let package_to_publish = packages_to_publish
-                .iter()
-                .copied()
-                .find(|p| p.id == s);
+            let package_to_publish = packages_to_publish.iter().copied().find(|p| p.id == s);
 
             let package_to_publish = match package_to_publish {
                 Some(p) => p,

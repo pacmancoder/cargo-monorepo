@@ -1,17 +1,8 @@
-use async_trait::async_trait;
+use crate::release::{ReleaseContext, ReleaseStep};
+use crate::{github::upload_github_release_asset, utils::shorten_commit};
 use anyhow::Context;
-use crate::{
-    release::{
-        ReleaseStep,
-        ReleaseContext,
-    },
-};
-use crate::{
-    utils::shorten_commit,
-    github::upload_github_release_asset,
-};
+use async_trait::async_trait;
 use octocrab::params::repos::Reference;
-
 
 pub struct ValidateCommitPushedToGithub;
 
@@ -20,7 +11,10 @@ impl ReleaseStep for ValidateCommitPushedToGithub {
     fn start_message(&self, ctx: &ReleaseContext) -> anyhow::Result<String> {
         let github_config = ctx.github_config()?;
         let commit = shorten_commit(ctx.current_commit()?);
-        Ok(format!("Checking that commit {} is pushed to {}", commit, github_config.repo))
+        Ok(format!(
+            "Checking that commit {} is pushed to {}",
+            commit, github_config.repo
+        ))
     }
 
     fn success_message(&self, _: &ReleaseContext) -> anyhow::Result<String> {
@@ -53,7 +47,6 @@ impl ReleaseStep for CreateTagOnGithub {
     }
 
     async fn execute(&self, ctx: &mut ReleaseContext) -> anyhow::Result<()> {
-
         let tempalte_context = ctx.text_template_context()?;
 
         let tag = ctx
@@ -69,7 +62,7 @@ impl ReleaseStep for CreateTagOnGithub {
 
         if ctx.is_dry_run() {
             println!("Skipping tag creation in dry run mode");
-            return Ok(())
+            return Ok(());
         }
 
         ctx.github_client()?
@@ -96,7 +89,6 @@ impl ReleaseStep for CreateGithubRelease {
     }
 
     async fn execute(&self, ctx: &mut ReleaseContext) -> anyhow::Result<()> {
-
         let tempalte_context = ctx.text_template_context()?;
 
         let title = ctx
@@ -121,10 +113,11 @@ impl ReleaseStep for CreateGithubRelease {
 
         if ctx.is_dry_run() {
             println!("Skipping GitHub release creation in dry run mode");
-            return Ok(())
+            return Ok(());
         }
 
-        let release = ctx.github_client()?
+        let release = ctx
+            .github_client()?
             .repos(&repo.owner, &repo.name)
             .releases()
             .create(&tag)
@@ -142,12 +135,8 @@ impl ReleaseStep for CreateGithubRelease {
             let artifacts = ctx.artifacts()?.to_vec();
             for artifact in artifacts {
                 println!("Uploading release artifact {}", artifact.display());
-                upload_github_release_asset(
-                    ctx.github_client()?,
-                    &repo,
-                    release.id,
-                    &artifact
-                ).await?;
+                upload_github_release_asset(ctx.github_client()?, &repo, release.id, &artifact)
+                    .await?;
             }
         }
 

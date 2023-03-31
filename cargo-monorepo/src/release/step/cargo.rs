@@ -1,9 +1,6 @@
+use crate::release::{ReleaseContext, ReleaseStep};
+use anyhow::{anyhow, bail};
 use async_trait::async_trait;
-use anyhow::{bail, anyhow};
-use crate::release::{
-    ReleaseStep,
-    ReleaseContext,
-};
 use std::time::Duration;
 use tokio::process::Command;
 
@@ -13,15 +10,11 @@ pub struct CargoPublish {
 
 impl CargoPublish {
     pub fn new() -> Self {
-        Self {
-            validate: false,
-        }
+        Self { validate: false }
     }
 
     pub fn validate_only() -> Self {
-        Self {
-            validate: true,
-        }
+        Self { validate: true }
     }
 
     async fn publish(&self, ctx: &mut ReleaseContext) -> anyhow::Result<()> {
@@ -31,7 +24,9 @@ impl CargoPublish {
 
         if self.validate {
             println!("\tPackage publish order:");
-            ordered_packages.iter().for_each(|p| println!("\t- {}", p.name));
+            ordered_packages
+                .iter()
+                .for_each(|p| println!("\t- {}", p.name));
         }
 
         let registry = ctx.release_config()?.registry.clone();
@@ -46,11 +41,7 @@ impl CargoPublish {
                         continue 'packages_loop;
                     }
                 }
-                execute_publish(
-                    &p.manifest_path.to_string(),
-                    &registry,
-                    true
-                ).await?;
+                execute_publish(&p.manifest_path.to_string(), &registry, true).await?;
                 println!("{} has been successfully validated!", p.name);
             }
 
@@ -69,11 +60,7 @@ impl CargoPublish {
                 tokio::time::sleep(Duration::from_secs(publish_interval as u64)).await;
             }
             println!("Publishing {}...", p.name);
-            execute_publish(
-                &p.manifest_path.to_string(),
-                &registry,
-                false
-            ).await?;
+            execute_publish(&p.manifest_path.to_string(), &registry, false).await?;
             previously_published = true;
             println!("{} has been successfully published!", p.name);
         }
@@ -114,7 +101,11 @@ impl ReleaseStep for CargoPublish {
     }
 }
 
-async fn execute_publish(manifest_path: &str, registry: &Option<String>, dry_run: bool) -> anyhow::Result<()> {
+async fn execute_publish(
+    manifest_path: &str,
+    registry: &Option<String>,
+    dry_run: bool,
+) -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
     let mut args = vec!["publish", "--manifest-path", manifest_path];
 

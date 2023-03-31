@@ -2,12 +2,8 @@
 //! cargo-release source code, so kudos to them!
 //! https://github.com/crate-ci/cargo-release
 use anyhow::Context;
-use std::collections::{
-    HashSet,
-    HashMap,
-};
 use cargo_metadata::{Metadata, PackageId};
-
+use std::collections::{HashMap, HashSet};
 
 pub fn sort_workspace(ws_meta: &Metadata) -> anyhow::Result<Vec<PackageId>> {
     let members: HashSet<_> = ws_meta.workspace_members.iter().collect();

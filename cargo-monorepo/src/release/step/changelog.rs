@@ -1,11 +1,6 @@
-use async_trait::async_trait;
+use crate::release::{ReleaseContext, ReleaseStep};
 use anyhow::{bail, Context};
-use crate::{
-    release::{
-        ReleaseStep,
-        ReleaseContext,
-    },
-};
+use async_trait::async_trait;
 use tokio::fs;
 
 pub struct CaptureChangelog;

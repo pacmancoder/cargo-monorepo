@@ -1,15 +1,12 @@
-use async_trait::async_trait;
-use anyhow::{bail, anyhow, Context};
-use tokio::process::Command;
 use crate::{
-    release::{
-        ReleaseStep,
-        ReleaseContext,
-    },
+    release::{ReleaseContext, ReleaseStep},
     utils::run_and_capture_stdout,
 };
-use std::env;
+use anyhow::{anyhow, bail, Context};
+use async_trait::async_trait;
 use cargo_metadata::{Metadata, MetadataCommand};
+use std::env;
+use tokio::process::Command;
 
 pub struct Init;
 
@@ -43,11 +40,15 @@ impl Init {
         let medatada = query_metadata().await?;
         let root_crate_name = ctx.root_crate_name();
 
-        let root_package = medatada.packages
+        let root_package = medatada
+            .packages
             .iter()
             .find(|p| p.name == root_crate_name)
             .ok_or_else(|| {
-                anyhow!("Failed to find root crate ({}) in workspace", root_crate_name)
+                anyhow!(
+                    "Failed to find root crate ({}) in workspace",
+                    root_crate_name
+                )
             })?;
 
         let version = root_package.version.clone();
@@ -65,7 +66,10 @@ impl Init {
 #[async_trait]
 impl ReleaseStep for Init {
     fn start_message(&self, ctx: &ReleaseContext) -> anyhow::Result<String> {
-        Ok(format!("Initializing release process for {}", ctx.config.workspace.root_crate))
+        Ok(format!(
+            "Initializing release process for {}",
+            ctx.config.workspace.root_crate
+        ))
     }
 
     fn success_message(&self, _: &ReleaseContext) -> anyhow::Result<String> {
@@ -82,24 +86,30 @@ impl ReleaseStep for Init {
 
 fn get_github_token() -> anyhow::Result<String> {
     const VAR_NAME: &str = "GITHUB_TOKEN";
-    let var = env::var(VAR_NAME)
-        .with_context(|| {
-            format!("GitHub token is missing, please provide it via {} env var", VAR_NAME)
-        })?;
+    let var = env::var(VAR_NAME).with_context(|| {
+        format!(
+            "GitHub token is missing, please provide it via {} env var",
+            VAR_NAME
+        )
+    })?;
 
     Ok(var)
 }
 
 fn get_crate_registry_token(registry: Option<String>) -> anyhow::Result<String> {
-    use convert_case::{Casing, Case};
+    use convert_case::{Case, Casing};
 
     let var_name = registry
         .as_ref()
         .map(|r| format!("CARGO_REGISTRIES_{}_TOKEN", r.to_case(Case::UpperSnake)))
         .unwrap_or_else(|| "CARGO_REGISTRY_TOKEN".to_owned());
 
-    let token = env::var(&var_name)
-        .with_context(|| format!("Crate resitry token is missing, please specify it via {} env var", var_name))?;
+    let token = env::var(&var_name).with_context(|| {
+        format!(
+            "Crate resitry token is missing, please specify it via {} env var",
+            var_name
+        )
+    })?;
 
     Ok(token)
 }
