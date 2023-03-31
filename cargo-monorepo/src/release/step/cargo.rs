@@ -41,7 +41,7 @@ impl CargoPublish {
                         continue 'packages_loop;
                     }
                 }
-                execute_publish(&p.manifest_path.to_string(), &registry, true).await?;
+                execute_publish(p.manifest_path.as_ref(), &registry, true).await?;
                 println!("{} has been successfully validated!", p.name);
             }
 
@@ -60,7 +60,7 @@ impl CargoPublish {
                 tokio::time::sleep(Duration::from_secs(publish_interval as u64)).await;
             }
             println!("Publishing {}...", p.name);
-            execute_publish(&p.manifest_path.to_string(), &registry, false).await?;
+            execute_publish(p.manifest_path.as_ref(), &registry, false).await?;
             previously_published = true;
             println!("{} has been successfully published!", p.name);
         }
@@ -73,17 +73,17 @@ impl CargoPublish {
 impl ReleaseStep for CargoPublish {
     fn start_message(&self, _: &ReleaseContext) -> anyhow::Result<String> {
         if self.validate {
-            Ok(format!("Validating cargo publish (with --dry-run)"))
+            Ok("Validating cargo publish (with --dry-run)".to_string())
         } else {
-            Ok(format!("Running cargo publish"))
+            Ok("Running cargo publish".to_string())
         }
     }
 
     fn success_message(&self, _: &ReleaseContext) -> anyhow::Result<String> {
         if self.validate {
-            Ok(format!("Cargo publish validation passed"))
+            Ok("Cargo publish validation passed".to_string())
         } else {
-            Ok(format!("Cargo publish succeeded"))
+            Ok("Cargo publish succeeded".to_string())
         }
     }
 

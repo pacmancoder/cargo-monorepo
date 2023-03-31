@@ -25,7 +25,7 @@ pub fn sort_workspace(ws_meta: &Metadata) -> anyhow::Result<Vec<PackageId>> {
     let mut sorted = Vec::new();
     let mut processed = HashSet::new();
     for pkg_id in ws_meta.workspace_members.iter() {
-        sort_workspace_inner(ws_meta, pkg_id, &dep_tree, &mut processed, &mut sorted);
+        sort_workspace_inner(pkg_id, &dep_tree, &mut processed, &mut sorted);
     }
 
     let sorted = sorted.into_iter().cloned().collect();
@@ -34,7 +34,6 @@ pub fn sort_workspace(ws_meta: &Metadata) -> anyhow::Result<Vec<PackageId>> {
 }
 
 fn sort_workspace_inner<'m>(
-    ws_meta: &'m Metadata,
     pkg_id: &'m PackageId,
     dep_tree: &HashMap<&'m PackageId, &'m Vec<PackageId>>,
     processed: &mut HashSet<&'m PackageId>,
@@ -48,7 +47,7 @@ fn sort_workspace_inner<'m>(
         .iter()
         .filter(|dep_id| dep_tree.contains_key(dep_id))
     {
-        sort_workspace_inner(ws_meta, dep_id, dep_tree, processed, sorted);
+        sort_workspace_inner(dep_id, dep_tree, processed, sorted);
     }
 
     sorted.push(pkg_id);

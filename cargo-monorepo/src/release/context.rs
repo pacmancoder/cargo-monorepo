@@ -166,8 +166,7 @@ impl ReleaseContext {
 
     pub fn artifacts(&self) -> anyhow::Result<&[PathBuf]> {
         self.artifacts
-            .as_ref()
-            .map(|a| a.as_slice())
+            .as_deref()
             .ok_or_else(|| anyhow!("Artifacts list is empty"))
     }
 

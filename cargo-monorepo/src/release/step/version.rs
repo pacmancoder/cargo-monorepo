@@ -72,7 +72,7 @@ impl VaidateVersion {
             }
 
             if package_validation_failed {
-                let package_name = full_package_name(&package);
+                let package_name = full_package_name(package);
                 println!(
                     "\t❌ {} has invalid dev-dependencies ({:?})",
                     package_name, broken_dev_deps
@@ -107,7 +107,7 @@ impl VaidateVersion {
 
             let registry_name = registry
                 .clone()
-                .unwrap_or(CRATES_IO_REGISTRY_NAME.to_owned());
+                .unwrap_or_else(|| CRATES_IO_REGISTRY_NAME.to_owned());
 
             if !publish_allowed {
                 let package_name = full_package_name(p);
@@ -184,11 +184,11 @@ impl VaidateVersion {
 #[async_trait]
 impl ReleaseStep for VaidateVersion {
     fn start_message(&self, _: &ReleaseContext) -> anyhow::Result<String> {
-        Ok(format!("Validating repo versioning"))
+        Ok("Validating repo versioning".to_string())
     }
 
     fn success_message(&self, _: &ReleaseContext) -> anyhow::Result<String> {
-        Ok(format!("Version validation done"))
+        Ok("Version validation done".to_string())
     }
 
     async fn execute(&self, ctx: &mut ReleaseContext) -> anyhow::Result<()> {
@@ -210,12 +210,11 @@ async fn query_last_released_version(crate_name: &str) -> anyhow::Result<Option<
     let crate_prefix = format!("{} = ", crate_name);
 
     let version_str = stdout
-        .split("\n")
+        .split('\n')
         .find(|s| s.starts_with(&crate_prefix))
-        .map(|s| s.trim().split('"').nth(1))
-        .flatten();
+        .and_then(|s| s.trim().split('"').nth(1));
 
-    let version = version_str.map(|s| Version::parse(s)).transpose()?;
+    let version = version_str.map(Version::parse).transpose()?;
 
     Ok(version)
 }
